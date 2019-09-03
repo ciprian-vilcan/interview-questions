@@ -1,210 +1,191 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
+﻿namespace CDSPractical 
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
 
-namespace CDSPractical {
-    public class Questions {
+    /// <summary>
+    /// The list of questions.
+    /// </summary>
+    public static class Questions 
+    {
         /// <summary>
         /// Given an enumerable of strings, attempt to parse each string and if 
         /// it is an integer, add it to the returned enumerable.
-        /// 
-        /// For example:
-        /// 
-        /// ExtractNumbers(new List<string> { "123", "hello", "234" });
-        /// 
-        /// ; would return:
-        /// 
-        /// {
-        ///   123,
-        ///   234
-        /// }
         /// </summary>
         /// <param name="source">An enumerable containing words</param>
-        /// <returns></returns>
-        public IEnumerable<int> ExtractNumbers(IEnumerable<string> source) {
-            throw new NotImplementedException();
+        /// <returns>The integers inside the input.</returns>
+        public static IEnumerable<int> ExtractNumbers(IEnumerable<string> source)
+        {
+            foreach (var item in source)
+            {
+                if (int.TryParse(item, out var result))
+                {
+                    yield return result;
+                }
+            }
         }
 
         /// <summary>
-        /// Given two enumerables of strings, find the longest common word.
-        /// 
-        /// For example:
-        /// 
-        /// LongestCommonWord(
-        ///     new List<string> {
-        ///         "love",
-        ///         "wandering",
-        ///         "goofy",
-        ///         "sweet",
-        ///         "mean",
-        ///         "show",
-        ///         "fade",
-        ///         "scissors",
-        ///         "shoes",
-        ///         "gainful",
-        ///         "wind",
-        ///         "warn"
-        ///     },
-        ///     new List<string> {
-        ///         "wacky",
-        ///         "fabulous",
-        ///         "arm",
-        ///         "rabbit",
-        ///         "force",
-        ///         "wandering",
-        ///         "scissors",
-        ///         "fair",
-        ///         "homely",
-        ///         "wiggly",
-        ///         "thankful",
-        ///         "ear"
-        ///     }
-        /// );
-        /// 
-        /// ; would return "wandering" as the longest common word.
+        /// Given two enumerables of strings, finds the longest common word. (case sensitive)
         /// </summary>
         /// <param name="first">First list of words</param>
         /// <param name="second">Second list of words</param>
-        /// <returns></returns>
-        public string LongestCommonWord(IEnumerable<string> first, IEnumerable<string> second) {
-            throw new NotImplementedException();
+        /// <returns>The longest common word. (case sensitive)</returns>
+        public static string LongestCommonWord(IEnumerable<string> first, IEnumerable<string> second)
+        {
+            var commonElements = first
+                .Join(
+                    second, 
+                    left => left, 
+                    right => right, 
+                    (left, right) => left)
+                .OrderByDescending(s => s.Length);
+
+            if (!commonElements.Any())
+            {
+                throw new ArgumentException("No common elements!");
+            }
+
+            return commonElements.First();
         }
 
         /// <summary>
-        /// Write a method that converts kilometers to miles, given that there are
-        /// 1.6 kilometers per mile.
-        /// 
-        /// For example:
-        /// 
-        /// DistanceInMiles(16.00);
-        /// 
-        /// ; would return 10.00;
+        /// Converts a given distance in kilometers to miles.
         /// </summary>
-        /// <param name="km">distance in kilometers</param>
-        /// <returns></returns>
-        public double DistanceInMiles(double km) {
-            throw new NotImplementedException();
-        }
+        /// <param name="km">Distance in kilometers</param>
+        /// <returns>The distance in miles.</returns>
+        public static double ToMiles(this double km) => km / 1.6;
 
         /// <summary>
-        /// Write a method that converts miles to kilometers, give that there are
-        /// 1.6 kilometers per mile.
-        /// 
-        /// For example:
-        /// 
-        /// DistanceInKm(10.00);
-        /// 
-        /// ; would return 16.00;
+        /// Converts a given distance in miles to kilometers.
         /// </summary>
-        /// <param name="miles">distance in miles</param>
-        /// <returns></returns>
-        public double DistanceInKm(double miles) {
-            throw new NotImplementedException();
-        }
+        /// <param name="miles">Distance in miles</param>
+        /// <returns>The distance in kilometers.</returns>
+        public static double ToKilometers(this double miles) => miles * 1.6;
 
         /// <summary>
-        /// Write a method that returns true if the word is a palindrome, false if
-        /// it is not.
-        /// 
-        /// For example:
-        /// 
-        /// IsPalindrome("bolton");
-        /// 
-        /// ; would return false, and:
-        /// 
-        /// IsPalindrome("Anna");
-        /// 
-        /// ; would return true.
-        /// 
-        /// Also complete the related test case for this method.
+        /// Indicates whether the input is a palindrome.
         /// </summary>
         /// <param name="word">The word to check</param>
-        /// <returns></returns>
-        public bool IsPalindrome(string word) {
-            throw new NotImplementedException();
+        /// <returns>Whether the word is a palindrome.</returns>
+        public static bool IsPalindrome(this string word) => word == new string(word.Reverse().ToArray());
+
+        /// <summary>
+        /// Returns a new list of objects containing the shuffled objects from the input.
+        /// </summary>
+        /// <typeparam name="T"> The type of object to shuffle. </typeparam>
+        /// <param name="source"> The objects. </param>
+        /// <returns> The shuffled list of objects. </returns>
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
+        {
+            var halfLength = source.Count() / 2;
+
+            var firstHalf = source.Take(halfLength);
+            var secondHalf = source.TakeLast(halfLength);
+            var middleCharacterIfAny = source.Count() % 2 == 0 ? Enumerable.Empty<T>() : new[] { source.Skip(halfLength).First() };
+
+            var intertwinedHalves = firstHalf
+                .Zip(secondHalf.Reverse(), (x, y) => new[] { y, x })
+                .Aggregate(Enumerable.Empty<T>(), (l, r) => l.Concat(r));
+            var result = intertwinedHalves
+                .Take(halfLength)
+                .Concat(middleCharacterIfAny)
+                .Concat(intertwinedHalves.TakeLast(halfLength));
+
+            return result;
         }
 
         /// <summary>
-        /// Write a method that takes an enumerable list of objects and shuffles
-        /// them into a different order.
-        /// 
-        /// For example:
-        /// 
-        /// Shuffle(new List<string>{ "one", "two" });
-        /// 
-        /// ; would return:
-        /// 
-        /// {
-        ///   "two",
-        ///   "one"
-        /// }
+        /// Sorts the elements of a sequence in ascending order
         /// </summary>
-        /// <param name="source"></param>
-        /// <returns></returns>
-        public IEnumerable<object> Shuffle(IEnumerable<object> source) {
-            throw new NotImplementedException();
+        /// <param name="source">The input.</param>
+        /// <returns>A new object containing the sorted elements.</returns>
+        public static int[] Sort(this int[] source)
+        {
+            var result = (int[])source.Clone();
+
+            for (var i = 0; i < result.Length; i++)
+            {
+                var currentMinIndex = i;
+
+                for (var j = i + 1; j < source.Length; j++)
+                {
+                    if (result[currentMinIndex] > result[j])
+                    {
+                        currentMinIndex = j;
+                    }
+                }
+
+                var intermediary = result[i];
+                result[i] = result[currentMinIndex];
+                result[currentMinIndex] = intermediary;
+            }
+
+            return result;
         }
 
         /// <summary>
-        /// Write a method that sorts an array of integers into ascending
-        /// order - do not use any built in sorting mechanisms or frameworks.
-        /// 
-        /// Complete the test for this method.
+        /// Sums all even terms in the Fibonacci sequence that are lower than the .
         /// </summary>
-        /// <param name="source"></param>
-        /// <returns></returns>
-        public int[] Sort(int[] source) {
-            throw new NotImplementedException();
-        }    
+        /// <param name="maximumBound">The maximum value of accepted numbers. </param>
+        /// <returns>
+        /// The sum.
+        /// </returns>
+        public static int FibonacciSum(int maximumBound) 
+        {
+            IEnumerable<int> Fib()
+            {
+                yield return 1;
+                yield return 2;
 
-        /// <summary>
-        /// Each new term in the Fibonacci sequence is generated by adding the 
-        /// previous two terms. By starting with 1 and 2, the first 10 terms will be:
-        ///
-        /// 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ...
-        ///
-        /// By considering the terms in the Fibonacci sequence whose values do 
-        /// not exceed four million, find the sum of the even-valued terms.
-        /// </summary>
-        /// <returns></returns>
-        public int FibonacciSum() {
-            throw new NotImplementedException();
+                var previousNumber = 2;
+                var currentNumber = 3;
+                while (true)
+                {
+                    yield return currentNumber;
+
+                    var intermediary = previousNumber;
+                    previousNumber = currentNumber;
+                    currentNumber += intermediary;
+                }
+            }
+
+            var sum = 0;
+            foreach (var number in Fib().TakeWhile(x => x < maximumBound))
+            {
+                if (number % 2 == 0)
+                {
+                    sum += number;
+                }
+            }
+
+            return sum;
         }
 
         /// <summary>
         /// Generate a list of integers from 1 to 100.
-        /// 
-        /// This method is currently broken, fix it so that the tests pass.
         /// </summary>
-        /// <returns></returns>
-        public IEnumerable<int> GenerateList() {
-            var ret = new List<int>();
-            var numThreads = 2;
-
-            Thread[] threads = new Thread[numThreads];
-            for (var i = 0; i < numThreads; i++) {
-                threads[i] = new Thread(() => {
-                    var complete = false;
-                    while (!complete) {                        
-                        var next = ret.Count + 1;
-                        Thread.Sleep(new Random().Next(1, 10));
-                        if (next <= 100) {
-                            ret.Add(next);
-                        }
-
-                        if (ret.Count >= 100) {
-                            complete = true;
-                        }
-                    }                    
-                });
-                threads[i].Start();
+        /// <returns>The list of ints.</returns>
+        public static IEnumerable<int> GenerateList(int simulatedDelay = 100)
+        {
+            void NewFunction(IList<int> targetContainer, int inclusiveStart, int inclusiveFinish)
+            {
+                for (var i = inclusiveStart; i <= inclusiveFinish; i++)
+                {
+                    Thread.Sleep(simulatedDelay);
+                    targetContainer[i] = i + 1;
+                }
             }
 
-            for (var i = 0; i < numThreads; i++) {
-                threads[i].Join();
-            }
+            var result = new int[100];
 
-            return ret;
+            var actions = new List<Action> { () => NewFunction(result, 0, 49), () => NewFunction(result, 50, 99) };
+            Parallel.ForEach(actions, new ParallelOptions { MaxDegreeOfParallelism = 2 }, action => action());
+
+            return result;
         }
     }
 }
